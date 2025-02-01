@@ -1,5 +1,4 @@
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
-use daemonize::Daemonize;
 use std::env;
 use std::process::Command;
 use std::sync::Mutex;
@@ -48,12 +47,6 @@ async fn main() -> std::io::Result<()> {
     };
 
     let state = web::Data::new(Mutex::new(AppState { git_workspace }));
-
-    let daemonize = Daemonize::new().pid_file("/tmp/git_pull_web.pid");
-    if let Err(e) = daemonize.start() {
-        eprintln!("Error daemonizing: {}", e);
-        std::process::exit(1);
-    }
 
     HttpServer::new(move || {
         App::new()
