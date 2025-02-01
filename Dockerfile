@@ -4,7 +4,7 @@ WORKDIR /usr/src/app
 
 COPY . .
 
-RUN cargo build --release
+RUN cargo build --release && ls -lah /usr/src/app/target/release/
 
 FROM debian:bookworm-slim
 
