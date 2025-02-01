@@ -5,9 +5,9 @@ Manual trigger pull on remote repository
 # Deployment
 
 ```
-docker build -t git-pull-web .
+docker build -t git-remote-pull .
 ```
 
 ```
-docker run -d --restart unless-stopped -p 9999:9999 -v /path/to/your/local/repo:/repo git-pull-web /repo
+docker run -d --restart=unless-stopped --name git-remote-pull -p 9999:9999 -v /path/to/your/local/repo:/repo git-remote-pull
 ```

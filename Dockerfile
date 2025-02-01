@@ -16,4 +16,4 @@ COPY --from=builder /usr/src/app/target/release/git-remote-pull /usr/local/bin/g
 
 EXPOSE 9999
 
-ENTRYPOINT ["/usr/local/bin/git-remote-pull"]
+CMD ["/usr/local/bin/git-remote-pull", "/repo"]
