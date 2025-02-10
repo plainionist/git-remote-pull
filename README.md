@@ -5,7 +5,12 @@ Manual trigger pull on remote repository
 # Deployment
 
 ```
-docker build -t git-remote-pull .
+sudo docker build -t git-remote-pull .
+```
+
+```
+sudo docker stop git-remote-pull
+sudo docker rm git-remote-pull
 ```
 
 ```

@@ -20,29 +20,50 @@ async fn index() -> impl Responder {
 async fn update(data: web::Data<Mutex<AppState>>) -> impl Responder {
     let workspace = data.lock().unwrap().git_workspace.clone();
 
-    let output = tokio::task::spawn_blocking(move || {
-        Command::new("git")
+    let result = tokio::task::spawn_blocking(move || {
+        let config_output = Command::new("git")
+            .arg("config")
+            .arg("--global")
+            .arg("--add")
+            .arg("safe.directory")
+            .arg(&workspace)
+            .output();
+
+        let pull_output = Command::new("git")
             .arg("-C")
             .arg(&workspace)
             .arg("pull")
-            .output()
+            .output();
+
+        (config_output, pull_output)
     })
     .await
     .unwrap();
 
-    match output {
-        Ok(out) => {
-            let stdout = String::from_utf8_lossy(&out.stdout);
-            let stderr = String::from_utf8_lossy(&out.stderr);
+    let (config_result, pull_result) = result;
 
-            HttpResponse::Ok().body(format!(
-                "<pre>{}\n{}</pre><br><a href='/'>Back</a>",
-                stdout, stderr
-            ))
-        }
-        Err(err) => HttpResponse::InternalServerError()
-            .body(format!("Error: {}<br><a href='/'>Back</a>", err)),
-    }
+    let config_output = match config_result {
+        Ok(out) => format!(
+            "Git Config Output:\n{}\n{}",
+            String::from_utf8_lossy(&out.stdout),
+            String::from_utf8_lossy(&out.stderr)
+        ),
+        Err(err) => format!("Error running git config: {}\n", err),
+    };
+
+    let pull_output = match pull_result {
+        Ok(out) => format!(
+            "Git Pull Output:\n{}\n{}",
+            String::from_utf8_lossy(&out.stdout),
+            String::from_utf8_lossy(&out.stderr)
+        ),
+        Err(err) => format!("Error running git pull: {}\n", err),
+    };
+
+    HttpResponse::Ok().body(format!(
+        "<pre>{}</pre>\n<pre>{}</pre>\n<a href='/'>Back</a>",
+        config_output, pull_output
+    ))
 }
 
 #[actix_web::main]
