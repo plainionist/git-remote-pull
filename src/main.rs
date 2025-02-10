@@ -19,17 +19,27 @@ async fn index() -> impl Responder {
 
 async fn update(data: web::Data<Mutex<AppState>>) -> impl Responder {
     let workspace = data.lock().unwrap().git_workspace.clone();
-    let output = Command::new("git")
-        .arg("-C")
-        .arg(&workspace)
-        .arg("pull")
-        .output();
+
+    let output = tokio::task::spawn_blocking(move || {
+        Command::new("git")
+            .arg("-C")
+            .arg(&workspace)
+            .arg("pull")
+            .output()
+    })
+    .await
+    .unwrap();
 
     match output {
-        Ok(out) => HttpResponse::Ok().body(format!(
-            "<pre>{}</pre><br><a href='/'>Back</a>",
-            String::from_utf8_lossy(&out.stdout)
-        )),
+        Ok(out) => {
+            let stdout = String::from_utf8_lossy(&out.stdout);
+            let stderr = String::from_utf8_lossy(&out.stderr);
+
+            HttpResponse::Ok().body(format!(
+                "<pre>{}\n{}</pre><br><a href='/'>Back</a>",
+                stdout, stderr
+            ))
+        }
         Err(err) => HttpResponse::InternalServerError()
             .body(format!("Error: {}<br><a href='/'>Back</a>", err)),
     }
